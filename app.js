@@ -1,12 +1,24 @@
 const express = require("express");
+const dotenv = require("dotenv");
+const connectDB = require("./config/db");
+const whatsappRoutes = require("./routes/whatsappRoutes");
+const { initWhatsapp } = require("./services/whatsappservice");
+
+dotenv.config();
 const app = express();
 
-// Route
-app.get("/", (req, res) => {
-    res.send("Hello, World! 🚀");
-});
+// Middleware
+app.use(express.json());
 
-// Start server
-app.listen(3000, () => {
-    console.log("Server is running at http://localhost:3000");
-});
+// DB
+connectDB();
+
+// Init WhatsApp
+initWhatsapp();
+
+// Routes
+app.use("/api/whatsapp", whatsappRoutes);
+
+// Start Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
