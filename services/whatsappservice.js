@@ -1,52 +1,85 @@
 // services/whatsappservice.js
-
-
-// services/whatsappservice.js
-const { Client } = require("whatsapp-web.js");
+const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode");
-const Session = require("../models/Session");
+const { receiveMessages } = require("../controllers/whatsappController");
 
-let client;
-let qrCodeData;
-let status = "disconnected";
+let client = null;
+let qrCodeImage = null;
+let connectionStatus = "Not started";
 
-const initWhatsapp = async () => {
+// Initialize WhatsApp client
+const initWhatsapp = () => {
+  if (client) return client; // already initialized
+
   client = new Client({
-    puppeteer: { headless: true },
-    session: null,
+    authStrategy: new LocalAuth({ clientId: "my-session" }), // persistent session
+    puppeteer: {
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-extensions",
+        "--disable-gpu",
+      ],
+    },
   });
 
+  // QR code event
   client.on("qr", async (qr) => {
-    qrCodeData = await qrcode.toDataURL(qr); // convert QR to base64
-    status = "qr";
-    console.log("QR RECEIVED");
+    try {
+      qrCodeImage = await qrcode.toDataURL(qr);
+      connectionStatus = "QR code generated. Scan it with WhatsApp.";
+      console.log("QR Code Generated.");
+    } catch (err) {
+      console.error("QR generation error:", err);
+    }
   });
 
-  client.on("authenticated", async (session) => {
-    console.log("AUTHENTICATED", session);
-    status = "authenticated";
-    await Session.findOneAndUpdate(
-      { _id: "whatsapp-session" },
-      { session },
-      { upsert: true }
-    );
-  });
-
+  // Ready event
   client.on("ready", () => {
-    console.log("Client is ready!");
-    status = "ready";
+    connectionStatus = "WhatsApp is Ready ✅";
+    console.log("WhatsApp Ready");
+    // Start listening to incoming messages
+    receiveMessages(client);
   });
 
-  client.on("disconnected", () => {
-    console.log("Client disconnected");
-    status = "disconnected";
+  // Authenticated event
+  client.on("authenticated", () => {
+    connectionStatus = "Authenticated 🔑";
+    console.log("WhatsApp Authenticated");
   });
 
+  // Auth failure
+  client.on("auth_failure", (msg) => {
+    connectionStatus = "Auth Failure ❌";
+    console.error("WhatsApp Auth Failure:", msg);
+  });
+
+  // Disconnected
+  client.on("disconnected", (reason) => {
+    connectionStatus = "Disconnected ⚠️";
+    console.warn("WhatsApp Disconnected:", reason);
+    try {
+      client.destroy();
+    } catch (err) {
+      console.error("Error destroying client:", err);
+    }
+    client = null;
+    qrCodeImage = null;
+    // Auto-reconnect after 5 seconds
+    setTimeout(() => initWhatsapp(), 5000);
+  });
+
+  // Initialize client
   client.initialize();
+
+  return client;
 };
 
+// Accessor functions
 const getClient = () => client;
-const getQr = () => qrCodeData;
-const getStatus = () => status;
+const getQr = () => qrCodeImage;
+const getStatus = () => connectionStatus;
 
 module.exports = { initWhatsapp, getClient, getQr, getStatus };
