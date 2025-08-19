@@ -9,6 +9,9 @@ const apiKeyMiddleware = require("./middleware/apiKeyMiddleware");
 dotenv.config();
 const app = express();
 
+// Trust proxy for rate-limiter to work behind proxy
+app.set("trust proxy", 1);
+
 // Middleware
 app.use(express.json());
 
