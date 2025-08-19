@@ -5,8 +5,13 @@ const { getClient } = require("../services/whatsappservice");
 exports.sendMessage = async (req, res) => {
   try {
     const { numbers, message } = req.body;
-    const client = getClient();
     const ip = req.ip;
+    const client = getClient();
+    if (!client || client.info === undefined) {
+      return res.status(500).json({ error: "WhatsApp client not ready yet." });
+    }
+    
+  
 
     if (!Array.isArray(numbers) || numbers.length === 0 || !message) {
       return res.status(400).json({ error: "Numbers (array) and message are required" });
