@@ -1,7 +1,7 @@
 // services/whatsappservice.js
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode");
-const { receiveMessages } = require("../controllers/whatsappController");
+
 
 let client = null;
 let qrCodeImage = null;
@@ -40,8 +40,7 @@ const initWhatsapp = () => {
   client.on("ready", () => {
     connectionStatus = "WhatsApp is Ready ✅";
     console.log("WhatsApp Ready");
-    // Start listening to incoming messages
-    receiveMessages(client);
+   
   });
 
   // Authenticated event
