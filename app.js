@@ -1,5 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
+const cors = require("cors");
 const connectDB = require("./config/db");
 const { initWhatsapp, getQr, getStatus } = require("./services/whatsappservice");
 const apiLimiter = require("./middleware/rateLimiter");
@@ -14,6 +15,15 @@ app.set("trust proxy", 1);
 
 // Middleware
 app.use(express.json());
+
+
+// ✅ Enable CORS (allow all)
+app.use(cors({
+  origin: "*",  // ⚠️ in production, replace "*" with your frontend domain(s)
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-api-key"],
+}));
+
 
 // Connect to MongoDB
 connectDB();
