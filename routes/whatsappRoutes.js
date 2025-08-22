@@ -6,8 +6,18 @@ const {
   sendMedia,
   getChats,
   getMessages,
-  getChatsByNumber 
+  getChatsByNumber,
+   getClient, getStatus,
+
 } = require("../controllers/whatsappController");
+
+
+// GET /api/whatsapp/status
+router.get("/status", (req, res) => {
+  const status = getStatus();
+  res.json({ status });
+});
+
 
 // POST /api/whatsapp/send → send text messages
 router.post("/send", sendMessage);
