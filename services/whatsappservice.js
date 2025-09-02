@@ -27,13 +27,16 @@ const createClient = () => {
         "--disable-extensions",
         "--disable-gpu",
         "--no-first-run",
-        "--single-process",
-        "--disable-dev-profile"
+        "--disable-dev-profile",
+        "--disable-software-rasterizer"
       ],
+      ignoreDefaultArgs: ["--enable-logging", "--v=1"],
+      timeout: 60000
     },
-    // optional: set puppeteerTimeout if needed
   });
 };
+
+
 
 const initWhatsapp = () => {
   if (client) return client; // already initialized or initializing
@@ -90,6 +93,10 @@ const initWhatsapp = () => {
   client.on("change_state", (state) => {
     // when the underlying WhatsApp connection state changes
     console.log("[WA] change_state:", state);
+  });
+
+  client.on("remote_session_saved", () => {
+    console.log("[WA] remote_session_saved ✅ (session stored)");
   });
 
   client.on("message_create", (message) => {
